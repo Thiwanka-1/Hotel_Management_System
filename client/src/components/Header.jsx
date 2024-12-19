@@ -31,75 +31,19 @@ export default function Header() {
       <div className="flex justify-between items-center max-w-full mx-auto py-2 px-9">
         {/* Left Section: Logo */}
         <div className="flex items-center space-x-1">
-          <img src={logo} alt="EduCode Logo" className="h-16" />
           <Link to='/'>
-            <h1 className='font-bold text-2xl'>EduCode</h1>
+          <img src={logo} alt="EduCode Logo" className="h-16" />
           </Link>
         </div>
-
         {/* Right Section: Navigation Links */}
         <ul className='flex gap-3 items-center'>
           <li>
             <Link to='/'>Home</Link>
           </li>
           <li>
-            <Link to='/about'>About Us</Link>
-          </li>
-          <li>
             <Link to='/contact'>Contact Us</Link>
           </li>
-          <li>
-            <Link to="/play-quiz">Play Quiz</Link>
-          </li>
-          <li>
-            <Link to="/questions">Questions</Link>
-          </li>
-          <li className="relative">
-            {/* Dropdown for Courses */}
-            <button onClick={toggleDropdown} className="focus:outline-none">
-              Courses
-            </button>
-            {dropdownOpen && (
-              <div
-                ref={dropdownRef}
-                className="absolute right-0 mt-2 bg-white border border-gray-300 rounded-md shadow-lg z-50"
-              >
-                <Link
-                  to="/courses/c"
-                  className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  C
-                </Link>
-                <Link
-                  to="/courses/cpp"
-                  className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  C++
-                </Link>
-                <Link
-                  to="/courses/java"
-                  className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  Java
-                </Link>
-                <Link
-                  to="/courses/python"
-                  className="block px-4 py-2 hover:bg-gray-100"
-                  onClick={() => setDropdownOpen(false)}
-                >
-                  Python
-                </Link>
-              </div>
-            )}
-          </li>
-
-          {/* Conditionally render IDE link based on authentication */}
-          <li>
-            <Link to='/ide'>IDE</Link>
-          </li>
+          
 
           {/* Conditional rendering for profile picture */}
           {currentUser ? (

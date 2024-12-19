@@ -4,40 +4,30 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 
+// Import route modules
 import userRoutes from './routes/user.route.js';
 import authRoutes from './routes/auth.route.js';
-import projectRoutes from './routes/projectRoutes.js'; // Your project CRUD routes
-import routes from './routes/routes.js'; 
 import contactRoutes from './routes/contactRoutes.js';
-import examsRoute from "./routes/examRoutes.js";
-import examsReportRoute from "./routes/examsReportRoute.js";
+import hotelRoutes from './routes/hotel.routes.js';  // Hotel routes
+import bookingRoutes from './routes/booking.route.js';  // Booking routes (new)
 
-import feedbackRoutes from './routes/feedbackroute.js';
-import questionRoutes from './routes/questionRoutes.js';
-
-import courseRoutes from './routes/course.routes.js';
-
-import createRoutes from './routes/create.route.js';
-
-
-// Load environment variables
+// Load environment variables from .env file
 dotenv.config();
-
 
 // Initialize the Express app
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(cookieParser());
+// Middleware setup
+app.use(express.json());        // For parsing application/json
+app.use(cookieParser());        // For parsing cookies in the requests
 
-// Configure CORS
+// CORS Configuration
 app.use(cors({
-  origin: 'http://localhost:5173',  // Allow requests from your frontend domain
-  credentials: true,                // Allow credentials like cookies, headers
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',  // Allow requests from frontend URL (use .env variable for flexibility)
+  credentials: true,                // Enable credentials like cookies, headers
 }));
 
-// MongoDB connection using Mongoose directly
+// MongoDB connection using Mongoose
 mongoose.connect(process.env.MONGO, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -50,27 +40,12 @@ mongoose.connect(process.env.MONGO, {
   process.exit(1); // Exit the process if MongoDB connection fails
 });
 
-
-// Routes (make sure your routes are properly set up and imported)
-// IDE run code routes
-
 // Define API routes
-app.use("/api/user", userRoutes);  // User management routes
-app.use("/api/auth", authRoutes);  // Authentication routes
-app.use('/project', projectRoutes);  // Project CRUD routes
-app.use('/ide', routes);            // IDE code execution routes
-app.use('/api', contactRoutes);
-
-app.use("/api/exams", examsRoute);
-app.use("/api/examsReport", examsReportRoute);
-
-app.use('/api/questions', questionRoutes);
-app.use('/api', feedbackRoutes);
-
-app.use('/api/courses', courseRoutes); // Use the course routes
-
-app.use("/api/create", createRoutes);
-
+app.use('/api/user', userRoutes);         // User management routes
+app.use('/api/auth', authRoutes);         // Authentication routes
+app.use('/api', contactRoutes);   // Contact routes
+app.use('/api/hotel', hotelRoutes);       // Hotel management routes
+app.use('/api/booking', bookingRoutes);  // Booking management routes (new)
 
 // Global error handling middleware
 app.use((err, req, res, next) => {

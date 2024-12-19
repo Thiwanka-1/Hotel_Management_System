@@ -27,26 +27,7 @@ export default function Sidebar() {
                 Contact Messages
               </Link>
             </li>
-            <li className="mb-4">
-              <Link to="/exam" className="hover:text-gray-300">
-                Exam Management
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/vfeed" className="hover:text-gray-300">
-                User Feedbacks
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/add-course" className="hover:text-gray-300">
-                Add Courses
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/manage-courses" className="hover:text-gray-300">
-                Manage Courses
-              </Link>
-            </li>
+            
           </>
         )}
 
@@ -54,36 +35,10 @@ export default function Sidebar() {
         {!currentUser.isAdmin && (
           <>
             <li className="mb-4">
-              <Link to="/projects" className="hover:text-gray-300">
-                Projects
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/feed" className="hover:text-gray-300">
-                Feedback
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/user/questions" className="hover:text-gray-300">
-                My Questions
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/questions/new" className="hover:text-gray-300">
-                Add Questions
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link to="/quicknote" className="hover:text-gray-300">
-                Add Notes
-              </Link>
-            </li>
-            <li className="mb-4">
               <Link to="/mynotes" className="hover:text-gray-300">
                 Manage Notes
               </Link>
-            </li>
-            
+            </li>    
           </>
         )}
       </ul>
