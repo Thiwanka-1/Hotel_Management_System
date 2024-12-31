@@ -31,14 +31,25 @@ export default function Header() {
       <div className="flex justify-between items-center max-w-full mx-auto py-2 px-9">
         {/* Left Section: Logo */}
         <div className="flex items-center space-x-1">
-          <Link to='/'>
+
+        {currentUser ? (
+        <Link to={currentUser.isAdmin ? '/admin-profile' : '/profile'}>
+        <img src={logo} alt="EduCode Logo" className="h-16" />
+          </Link>
+        ) : (
+          <Link to='/sign-in'>
           <img src={logo} alt="EduCode Logo" className="h-16" />
           </Link>
+        )}
+
         </div>
         {/* Right Section: Navigation Links */}
         <ul className='flex gap-3 items-center'>
           <li>
-            <Link to='/'>Home</Link>
+            <Link to='/adminbook'>Book</Link>
+          </li>
+          <li>
+            <Link to='/checkavailability'>Availability</Link>
           </li>
           <li>
             <Link to='/contact'>Contact Us</Link>

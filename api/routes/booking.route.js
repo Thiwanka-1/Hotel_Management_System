@@ -1,33 +1,33 @@
 import express from 'express';
-import { 
-  createBooking, 
-  getBookings, 
-  updateBookingStatus, 
-  updateBooking, 
-  getBookingByConfirmationNumber, 
-  deleteBooking
+import {
+  createBooking,
+  cancelBooking,
+  updateBooking,
+  getAllBookings,
+  getHotelBookings,
+  toggleBookingStatus,
+  getBookingById ,
 } from '../controllers/booking.controller.js';
-import { verifyToken } from '../utils/verifyUser.js';
 
 const router = express.Router();
 
-// CREATE a new booking (Authenticated users)
-router.post('/create', verifyToken, createBooking);
+// Create a new booking
+router.post('/add', createBooking);
 
-// GET all bookings (Admin only or hotel-specific based on user role)
-router.get('/', verifyToken, getBookings);
+// Cancel a booking
+router.delete('/cancel/:id', cancelBooking);
 
-// UPDATE booking status (Admin only)
-router.put('/update-status', verifyToken, updateBookingStatus);
+// Update a booking
+router.put('/update/:id', updateBooking);
 
-// UPDATE booking details (Authenticated users)
-router.put('/update/:id', verifyToken, updateBooking);
+// Get all bookings (for admin)
+router.get('/all', getAllBookings);
 
-// GET booking by confirmation number (Authenticated users)
-router.get('/:confirmationNumber', verifyToken, getBookingByConfirmationNumber);
+// Get bookings for a specific hotel
+router.get('/hotel/:hotelId', getHotelBookings);
 
-// Route to delete a booking
-router.delete('/delete/:id',verifyToken, deleteBooking);
+router.put('/toggle-status/:id', toggleBookingStatus);
 
+router.get('/:id', getBookingById);
 
 export default router;

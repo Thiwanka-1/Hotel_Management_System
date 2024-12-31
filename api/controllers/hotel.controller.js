@@ -1,114 +1,102 @@
 import Hotel from '../models/hotel.model.js';
 import User from '../models/user.model.js';
 import bcryptjs from 'bcryptjs';
-import { errorHandler } from '../utils/error.js';  // Assuming you have an error handler utility
-import { validateHotelData } from '../utils/validate.js';  // Validation utility (optional)
+import { errorHandler } from '../utils/error.js';
+import mongoose from 'mongoose';
 
 /**
  * Register a new hotel with admin user
  */
 export const registerHotel = async (req, res, next) => {
-    try {
-      const {
-        hotelName,
-        email,
-        location,
-        roomDetails,
-        stayType,
-        password,
-      } = req.body;
-  
-      // Calculate total rooms
-      const totalRooms = Object.values(roomDetails).reduce((acc, count) => acc + count, 0);
-  
-      // Hash password
-      const hashedPassword = bcryptjs.hashSync(password, 10);
-  
-      // Create the Hotel entry
-      const hotel = await Hotel.create({
-        hotelName,
-        email,
-        location,
-        roomDetails,
-        stayType,
-        totalRooms,
-        password: hashedPassword, // Store hashed password for security
-      });
-  
-      // Create the User entry for authentication
-      const user = await User.create({
-        username: hotelName, // Use hotel name as username
-        email,
-        password: hashedPassword,
-        hotelId: hotel._id, // Link User to Hotel
-        isAdmin: false,
-      });
-  
-      res.status(201).json({
-        message: 'Hotel registered successfully',
-        hotel,
-        user,
-      });
-    } catch (error) {
-      console.error("Error during hotel registration:", error);  // Log the error
-      next(error);  // Pass the error to the global error handler
-    }
-  };
+  try {
+    const { hotelName, email, location, roomDetails, stayType, password } = req.body;
+
+    // Calculate total rooms
+    const totalRooms = Object.values(roomDetails).reduce((acc, count) => acc + count, 0);
+
+    // Hash password
+    const hashedPassword = bcryptjs.hashSync(password, 10);
+
+    // Create the Hotel entry
+    const hotel = await Hotel.create({
+      hotelName,
+      email,
+      location,
+      roomDetails,
+      stayType,
+      totalRooms,
+      password: hashedPassword,
+    });
+
+    // Create the User entry for authentication
+    const user = await User.create({
+      username: hotelName,
+      email,
+      password: hashedPassword,
+      hotelId: hotel._id,
+      isAdmin: false,
+    });
+
+    res.status(201).json({
+      message: 'Hotel registered successfully',
+      hotel,
+      user,
+    });
+  } catch (error) {
+    console.error('Error during hotel registration:', error);
+    next(errorHandler(500, 'Failed to register hotel.'));
+  }
+};
 
 /**
  * Update hotel details
  */
 export const updateHotel = async (req, res, next) => {
-    try {
-      const { id } = req.params; // Hotel ID from the URL params
-      const { hotelName, email, location, roomDetails, stayType } = req.body;
-  
-      // Calculate total rooms
-      const totalRooms = Object.values(roomDetails).reduce((acc, count) => acc + count, 0);
-  
-      // Update the hotel data
-      const updatedHotel = await Hotel.findByIdAndUpdate(
-        id,
-        { hotelName, email, location, roomDetails, stayType, totalRooms },
-        { new: true } // Return the updated document
-      );
-  
-      if (!updatedHotel) {
-        return res.status(404).json({
-          success: false,
-          message: 'Hotel not found.',
-        });
-      }
-  
-      // Update the corresponding User entry
-      const updatedUser = await User.findOneAndUpdate(
-        { hotelId: id }, // Match the User by the linked hotelId
-        { username: hotelName, email }, // Update the User fields
-        { new: true } // Return the updated document
-      );
-  
-      if (!updatedUser) {
-        return res.status(404).json({
-          success: false,
-          message: 'User linked to the hotel not found.',
-        });
-      }
-  
-      res.status(200).json({
-        success: true,
-        message: 'Hotel and associated user updated successfully.',
-        hotel: updatedHotel,
-        user: updatedUser,
-      });
-    } catch (error) {
-      console.error(error);
-      next({
-        statusCode: 500,
-        message: 'Failed to update the hotel and associated user.',
-      });
-    }
-  };
+  try {
+    const { id } = req.params;
+    const { hotelName, email, location, roomDetails, stayType, password } = req.body;
 
+    const totalRooms = Object.values(roomDetails).reduce((acc, count) => acc + count, 0);
+
+    const updateData = {
+      hotelName,
+      email,
+      location,
+      roomDetails,
+      stayType,
+      totalRooms,
+    };
+
+    if (password) {
+      const hashedPassword = bcryptjs.hashSync(password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    const updatedHotel = await Hotel.findByIdAndUpdate(id, updateData, { new: true });
+
+    if (!updatedHotel) {
+      return res.status(404).json({ success: false, message: 'Hotel not found.' });
+    }
+
+    await User.findOneAndUpdate(
+      { hotelId: id },
+      {
+        username: hotelName,
+        email,
+        ...(password && { password: updateData.password }),
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Hotel and associated user updated successfully.',
+      hotel: updatedHotel,
+    });
+  } catch (error) {
+    console.error('Error updating hotel:', error);
+    next(errorHandler(500, 'Failed to update hotel.'));
+  }
+};
 
 /**
  * Delete a hotel
@@ -117,16 +105,15 @@ export const deleteHotel = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Find and delete hotel by ID
     const deletedHotel = await Hotel.findByIdAndDelete(id);
-    if (!deletedHotel) return next(errorHandler(404, 'Hotel not found'));
+    if (!deletedHotel) return next(errorHandler(404, 'Hotel not found.'));
 
-    // Optionally, delete associated user (admin) as well
     await User.findOneAndDelete({ hotelId: id });
 
     res.status(200).json({ message: 'Hotel and associated user deleted successfully.' });
   } catch (error) {
-    next(errorHandler(500, 'Failed to delete the hotel.'));
+    console.error('Error deleting hotel:', error);
+    next(errorHandler(500, 'Failed to delete hotel.'));
   }
 };
 
@@ -137,25 +124,71 @@ export const getHotelDetails = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    // Find hotel by ID
     const hotel = await Hotel.findById(id);
-    if (!hotel) return next(errorHandler(404, 'Hotel not found'));
+    if (!hotel) return next(errorHandler(404, 'Hotel not found.'));
 
     res.status(200).json(hotel);
   } catch (error) {
+    console.error('Error fetching hotel details:', error);
     next(errorHandler(500, 'Failed to retrieve hotel details.'));
   }
 };
 
 /**
- * Get all hotels
+ * Get all hotels with pagination
  */
 export const getAllHotels = async (req, res, next) => {
   try {
-    // Find all hotels
-    const hotels = await Hotel.find();
+    const { page = 1, limit = 10 } = req.query;
+    const hotels = await Hotel.find()
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
     res.status(200).json(hotels);
   } catch (error) {
+    console.error('Error fetching hotels:', error);
     next(errorHandler(500, 'Failed to retrieve hotels.'));
+  }
+};
+
+/**
+ * Check availability
+ */
+export const checkAvailability = async (req, res, next) => {
+  const { id: hotelId } = req.params;
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ success: false, message: 'Start and end dates are required.' });
+  }
+
+  try {
+    const hotel = await Hotel.findById(hotelId);
+    if (!hotel) return res.status(404).json({ success: false, message: 'Hotel not found.' });
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    const availability = [];
+    let currentDate = new Date(start);
+
+    while (currentDate <= end) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const dailyAvailability = hotel.roomAvailability.find(
+        (entry) => entry.date.toISOString().split('T')[0] === dateStr
+      );
+
+      availability.push({
+        date: dateStr,
+        ...dailyAvailability ? dailyAvailability.toObject() : hotel.roomDetails,
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    res.status(200).json({ success: true, availability });
+  } catch (error) {
+    console.error('Error checking availability:', error);
+    next(errorHandler(500, 'Error fetching availability.'));
   }
 };

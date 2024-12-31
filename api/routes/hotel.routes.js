@@ -4,7 +4,8 @@ import {
   updateHotel, 
   deleteHotel, 
   getHotelDetails, 
-  getAllHotels 
+  getAllHotels, 
+  checkAvailability
 } from '../controllers/hotel.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -24,5 +25,9 @@ router.get('/get/:id', verifyToken, getHotelDetails);
 
 // GET all hotels (Admin Only)
 router.get('/getall', verifyToken, getAllHotels);
+
+// hotel.routes.js
+router.get('/availability/:id', verifyToken, checkAvailability);
+
 
 export default router;

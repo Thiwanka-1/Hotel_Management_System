@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import OAuth from '../components/OAuth';
 
 export default function SignUp() {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', isAdmin: false });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
@@ -27,7 +27,11 @@ export default function SignUp() {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
+    const { id, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: type === 'checkbox' ? checked : value, // Handle checkbox for isAdmin
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -99,21 +103,22 @@ export default function SignUp() {
             {showPassword ? 'Hide' : 'Show'}
           </button>
         </div>
+        <label className='flex items-center gap-2'>
+          <input
+            type='checkbox'
+            id='isAdmin'
+            className='bg-slate-100 rounded-lg'
+            onChange={handleChange}
+          />
+          <span className='text-sm'>Create Admin Account</span>
+        </label>
         <button
           disabled={loading}
           className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'
         >
           {loading ? 'Loading...' : 'Sign Up'}
         </button>
-        <OAuth />
       </form>
-
-      <div className='flex gap-2 mt-5 '>
-        <p>Have an account?</p>
-        <Link to='/sign-in'>
-          <span className='text-blue-500'>Sign in</span>
-        </Link>
-      </div>
       {errors.server && <p className='text-red-700 mt-5'>{errors.server}</p>}
     </div>
   );

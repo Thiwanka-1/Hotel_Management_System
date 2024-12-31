@@ -1,20 +1,20 @@
-import { useSelector, useDispatch } from 'react-redux';
 import { useState, useRef, useEffect } from 'react';
-import { getDownloadURL, getStorage, ref, uploadBytesResumable } from 'firebase/storage';
+import { useSelector, useDispatch } from 'react-redux';
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { app } from '../firebase';
-import { updateUserStart, updateUserSuccess, updateUserFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure, signOut } from '../redux/user/userSlice';
 import Sidebar from '../components/Sidebar';
+import { signOut } from '../redux/user/userSlice';  // Correct import for signOut
+import { useNavigate } from 'react-router-dom';
 
-export default function Profile() {
+export default function HotelProfile() {
   const dispatch = useDispatch();
   const fileRef = useRef(null);
   const [image, setImage] = useState(undefined);
   const [imagePercent, setImagePercent] = useState(0);
   const [imageError, setImageError] = useState(false);
   const [formData, setFormData] = useState({});
-  const [updateSuccess, setUpdateSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const { currentUser, loading, error } = useSelector((state) => state.user);
 
@@ -52,8 +52,8 @@ export default function Profile() {
     const newErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (formData.username && formData.username.length < 8) {
-      newErrors.username = 'Username must be at least 8 characters long';
+    if (formData.hotelName && formData.hotelName.length < 3) {
+      newErrors.hotelName = 'Hotel name must be at least 3 characters long';
     }
     if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
@@ -65,10 +65,6 @@ export default function Profile() {
     return newErrors;
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.id]: e.target.value });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
@@ -78,9 +74,8 @@ export default function Profile() {
     }
 
     try {
-      dispatch(updateUserStart());
-      const res = await fetch(`/api/user/update/${currentUser._id}`, {
-        method: 'POST',
+      const res = await fetch(`/api/hotel/update/${currentUser.hotelId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -88,137 +83,96 @@ export default function Profile() {
       });
       const data = await res.json();
       if (data.success === false) {
-        dispatch(updateUserFailure(data));
+        alert('Error updating hotel');
         return;
       }
 
-      dispatch(updateUserSuccess(data));
       setUpdateSuccess(true);
     } catch (error) {
-      dispatch(updateUserFailure(error));
+      console.error('Error updating hotel:', error);
     }
   };
-
-  const handleDeleteAccount = async () => {
-    try {
-      dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
-        method: 'DELETE',
-      });
-      const data = await res.json();
-      if (data.success === false) {
-        dispatch(deleteUserFailure(data));
-        return;
-      }
-      dispatch(deleteUserSuccess(data));
-    } catch (error) {
-      dispatch(deleteUserFailure(error));
-    }
-  };
+  
 
   const handleSignOut = async () => {
     try {
       await fetch('/api/auth/signout');
-      dispatch(signOut());
+      dispatch(signOut()); // Assuming signOut is a Redux action
+      navigate('/login'); // Redirect to the login page
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
+  
 
   return (
     <div className="flex h-full">
       <Sidebar />
 
       <div className="flex-1 p-8 ml-64">
-        <h1 className='text-3xl font-semibold text-center mb-7'>Profile</h1>
-        <form onSubmit={handleSubmit} className='flex flex-col gap-4 max-w-lg mx-auto'>
+        <h1 className="text-3xl font-semibold text-center mb-7">Hotel Profile</h1>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-lg mx-auto">
           <input
-            type='file'
+            type="file"
             ref={fileRef}
             hidden
-            accept='image/*'
+            accept="image/*"
             onChange={(e) => setImage(e.target.files[0])}
           />
           <img
             src={formData.profilePicture || currentUser.profilePicture}
-            alt='profile'
-            className='h-24 w-24 self-center cursor-pointer rounded-full object-cover'
+            alt="hotel profile"
+            className="h-24 w-24 self-center cursor-pointer rounded-full object-cover"
             onClick={() => fileRef.current.click()}
           />
           
-          <p className='text-sm self-center'>
+          <p className="text-sm self-center">
             {imageError ? (
-              <span className='text-red-700'>
+              <span className="text-red-700">
                 Error uploading image (file size must be less than 2 MB)
               </span>
             ) : imagePercent > 0 && imagePercent < 100 ? (
-              <span className='text-slate-700'>{`Uploading: ${imagePercent} %`}</span>
+              <span className="text-slate-700">{`Uploading: ${imagePercent} %`}</span>
             ) : imagePercent === 100 ? (
-              <span className='text-green-700'>Image uploaded successfully</span>
+              <span className="text-green-700">Image uploaded successfully</span>
             ) : (
               ''
             )}
           </p>
-          
+
           <input
             defaultValue={currentUser.username}
-            type='text'
-            id='username'
-            placeholder='Username'
-            className='bg-slate-100 rounded-lg p-3'
-            onChange={handleChange}
+            type="text"
+            id="username"
+            placeholder="Hotel Name"
+            className="bg-slate-100 rounded-lg p-3"
+            disabled
           />
-          {errors.username && <p className="text-red-500">{errors.username}</p>}
+          {errors.hotelName && <p className="text-red-500">{errors.hotelName}</p>}
 
           <input
             defaultValue={currentUser.email}
-            type='email'
-            id='email'
-            placeholder='Email'
-            className='bg-slate-100 rounded-lg p-3'
-            onChange={handleChange}
+            type="email"
+            id="email"
+            placeholder="Email"
+            className="bg-slate-100 rounded-lg p-3"
+            disabled
           />
           {errors.email && <p className="text-red-500">{errors.email}</p>}
-
-          <div className='relative'>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              id='password'
-              placeholder='Password'
-              className='bg-slate-100 rounded-lg p-3 w-full'
-              onChange={handleChange}
-            />
-            <button
-              type='button'
-              onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 right-3 flex items-center'
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          </div>
           {errors.password && <p className="text-red-500">{errors.password}</p>}
-
-          <button className='bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80'>
-            {loading ? 'Loading...' : 'Update'}
-          </button>
+          
         </form>
+        <div className="flex justify-center mt-7">
+  <button
+    onClick={handleSignOut}
+    className="bg-slate-700 text-white p-3 rounded-lg uppercase hover:opacity-95 disabled:opacity-80 w-full max-w-lg"
+  >
+    Sign out
+  </button>
+</div>
 
-        <div className='flex justify-between max-w-lg mx-auto mt-5'>
-          <span
-            onClick={handleDeleteAccount}
-            className='text-red-700 cursor-pointer'
-          >
-            Delete Account
-          </span>
-          <span onClick={handleSignOut} className='text-red-700 cursor-pointer'>
-            Sign out
-          </span>
-        </div>
 
-        <p className='text-red-700 text-center mt-5'>{error && 'Something went wrong!'}</p>
-        <p className='text-green-700 text-center mt-5'>
-          {updateSuccess && 'User is updated successfully!'}
-        </p>
+          
       </div>
     </div>
   );

@@ -27,7 +27,36 @@ export default function Sidebar() {
                 Contact Messages
               </Link>
             </li>
-            
+            <li className="mb-4">
+              <Link to="/addhotel" className="hover:text-gray-300">
+              Add Hotels
+              </Link>
+            </li> 
+            <li className="mb-4">
+              <Link to="/hotels" className="hover:text-gray-300">
+              Manage Hotels
+              </Link>
+            </li>
+            <li className="mb-4">
+              <Link to="/adminbook" className="hover:text-gray-300">
+              Add Bookings
+              </Link>
+            </li> 
+            <li className="mb-4">
+              <Link to="/managebookingadmin" className="hover:text-gray-300">
+              Manage Bookings
+              </Link>
+            </li> 
+            <li className="mb-4">
+              <Link to="/checkavailability" className="hover:text-gray-300">
+                Check Hotel Availability
+              </Link>
+            </li>
+            <li className="mb-4">
+              <Link to="/sign-up" className="hover:text-gray-300">
+                Add Admin
+              </Link>
+            </li> 
           </>
         )}
 
@@ -35,10 +64,20 @@ export default function Sidebar() {
         {!currentUser.isAdmin && (
           <>
             <li className="mb-4">
-              <Link to="/mynotes" className="hover:text-gray-300">
-                Manage Notes
+              <Link to="/adminbook" className="hover:text-gray-300">
+                Add Bookings
               </Link>
-            </li>    
+            </li>  
+            <li className="mb-4">
+              <Link to="/hotelmanage" className="hover:text-gray-300">
+                Manage Bookings
+              </Link>
+            </li>
+            <li className="mb-4">
+              <Link to="/checkavailability" className="hover:text-gray-300">
+                Check Hotel Availability
+              </Link>
+            </li>      
           </>
         )}
       </ul>

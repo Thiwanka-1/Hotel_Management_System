@@ -19,10 +19,6 @@ export default function SignIn() {
     if (!emailRegex.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters long';
-    }
-
     return newErrors;
   };
 
@@ -101,15 +97,7 @@ export default function SignIn() {
         >
           {loading ? 'Loading...' : 'Sign In'}
         </button>
-        <OAuth />
       </form>
-
-      <div className='flex gap-2 mt-5 '>
-        <p>Dont Have an account?</p>
-        <Link to='/sign-up'>
-          <span className='text-blue-500'>Sign up</span>
-        </Link>
-      </div>
       <p className='text-red-700 mt-5'>
         {error ? error.message || 'Something went wrong!' : ''}
       </p>

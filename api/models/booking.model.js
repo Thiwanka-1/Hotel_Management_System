@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid'; // Import UUID for generating unique confirmation numbers
+import { v4 as uuidv4 } from 'uuid';
 
 const BookingSchema = new mongoose.Schema(
   {
@@ -27,64 +27,41 @@ const BookingSchema = new mongoose.Schema(
     confirmationNumber: {
       type: String,
       unique: true,
-      default: () => uuidv4(), // Generate a unique confirmation number
+      default: () => uuidv4(),
     },
     totalGuests: {
-      type: Number,
-      required: true,
-      min: 1,
+      adults: { type: Number, default: 0 },
+      children: { type: Number, default: 0 },
     },
-    singleRoom: {
-      count: { type: Number, default: 0, min: 0 },
-      pricePerRoom: { type: Number, default: 0, min: 0 },
-    },
-    doubleRoom: {
-      count: { type: Number, default: 0, min: 0 },
-      pricePerRoom: { type: Number, default: 0, min: 0 },
-    },
-    tripleRoom: {
-      count: { type: Number, default: 0, min: 0 },
-      pricePerRoom: { type: Number, default: 0, min: 0 },
-    },
-    familyRoom: {
-      count: { type: Number, default: 0, min: 0 },
-      pricePerRoom: { type: Number, default: 0, min: 0 },
-    },
-    suiteRoom: {
-      count: { type: Number, default: 0, min: 0 },
-      pricePerRoom: { type: Number, default: 0, min: 0 },
-    },
-    stayTypes: {
-      type: [String], // Multiple options dropdown for stay types
-      default: [],
+    rooms: {
+      single: { count: { type: Number, default: 0 }, pricePerRoom: { type: Number, default: 0 } },
+      double: { count: { type: Number, default: 0 }, pricePerRoom: { type: Number, default: 0 } },
+      triple: { count: { type: Number, default: 0 }, pricePerRoom: { type: Number, default: 0 } },
+      family: { count: { type: Number, default: 0 }, pricePerRoom: { type: Number, default: 0 } },
+      suite: { count: { type: Number, default: 0 }, pricePerRoom: { type: Number, default: 0 } },
     },
     dateRange: {
-      startDate: {
-        type: Date,
-        required: true,
-      },
-      endDate: {
-        type: Date,
-        required: true,
-      },
+      startDate: { type: Date, required: true },
+      endDate: { type: Date, required: true },
+    },
+    stayType: {
+      type: String,
+      enum: ['Room Only', 'Bed & Breakfast', 'Full Board', 'Half Board'],
+      required: true,
     },
     specialRequests: {
       type: String,
-      default: 'No',
+      default: 'No special requests',
     },
-    status: {
-      type: String,
-      enum: ['Pending', 'Confirmed', 'Cancelled'],
-      default: 'Pending',
-    },
-    totalPrice: {
-      type: Number,
-      required: true,
-      min: 0,
+    totalPrice: { type: Number, required: true },
+    status: { type: String, enum: ['confirmed', 'pending'], default: 'pending' },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
+    notifications: {
+      lowAvailability: { type: Boolean, default: false }, // New field for low availability alerts
     },
   },
-  { timestamps: true }
+  { timestamps: true } // Automatically manage `createdAt` and `updatedAt`
 );
 
 export default mongoose.model('Booking', BookingSchema);
-
