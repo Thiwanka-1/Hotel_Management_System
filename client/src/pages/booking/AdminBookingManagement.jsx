@@ -54,17 +54,40 @@ const AdminBookingManagement = () => {
   }, []);
 
   // Filtered bookings based on selected criteria
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesHotel =
-      !selectedHotel ||
-      booking.hotelId === selectedHotel ||
-      (booking.hotelId?._id && booking.hotelId._id === selectedHotel);
-    const matchesStatus =
-      !statusFilter || booking.status === statusFilter;
-    const matchesSearch =
-      !searchTerm || booking.confirmationNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesHotel && matchesStatus && matchesSearch;
-  });
+ // Filtered bookings based on selected criteria and report criteria
+const filteredBookings = bookings.filter((booking) => {
+  const matchesHotel =
+    !selectedHotel ||
+    booking.hotelId === selectedHotel ||
+    (booking.hotelId?._id && booking.hotelId._id === selectedHotel);
+  const matchesStatus =
+    !statusFilter || booking.status === statusFilter;
+  const matchesSearch =
+    !searchTerm || booking.confirmationNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+  // Filter by report criteria
+  const bookingStartDate = new Date(booking.dateRange.startDate);
+  const bookingEndDate = new Date(booking.dateRange.endDate);
+  let matchesReportCriteria = true;
+
+  if (reportType === 'range' && reportDateRange.startDate && reportDateRange.endDate) {
+    const reportStartDate = new Date(reportDateRange.startDate);
+    const reportEndDate = new Date(reportDateRange.endDate);
+    matchesReportCriteria =
+      bookingStartDate >= reportStartDate && bookingEndDate <= reportEndDate;
+  } else if (reportType === 'month' && reportMonth) {
+    const [year, month] = reportMonth.split('-');
+    matchesReportCriteria =
+      bookingStartDate.getFullYear() === parseInt(year, 10) &&
+      bookingStartDate.getMonth() === parseInt(month, 10) - 1;
+  } else if (reportType === 'year' && reportYear) {
+    matchesReportCriteria =
+      bookingStartDate.getFullYear() === parseInt(reportYear, 10);
+  }
+
+  return matchesHotel && matchesStatus && matchesSearch && matchesReportCriteria;
+});
+
 
   // Generate PDF Report
   const generateReport = () => {

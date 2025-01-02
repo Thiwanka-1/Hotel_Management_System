@@ -44,8 +44,29 @@ const HotelBookingManagement = () => {
     const matchesStatus = !statusFilter || booking.status === statusFilter;
     const matchesSearch =
       !searchTerm || booking.confirmationNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesStatus && matchesSearch;
+  
+    // Filter by report criteria
+    const bookingStartDate = new Date(booking.dateRange.startDate);
+    const bookingEndDate = new Date(booking.dateRange.endDate);
+    let matchesReportCriteria = true;
+  
+    if (reportType === 'range' && reportDateRange.startDate && reportDateRange.endDate) {
+      const reportStartDate = new Date(reportDateRange.startDate);
+      const reportEndDate = new Date(reportDateRange.endDate);
+      matchesReportCriteria =
+        bookingStartDate >= reportStartDate && bookingEndDate <= reportEndDate;
+    } else if (reportType === 'month' && reportMonth) {
+      const [year, month] = reportMonth.split('-');
+      matchesReportCriteria =
+        bookingStartDate.getFullYear() === parseInt(year, 10) &&
+        bookingStartDate.getMonth() === parseInt(month, 10) - 1;
+    } else if (reportType === 'year' && reportYear) {
+      matchesReportCriteria = bookingStartDate.getFullYear() === parseInt(reportYear, 10);
+    }
+  
+    return matchesStatus && matchesSearch && matchesReportCriteria;
   });
+  
 
   // Toggle booking confirmation
   const handleToggleConfirmation = async (bookingId, currentStatus) => {
@@ -90,10 +111,10 @@ const HotelBookingManagement = () => {
 
   const generateReport = () => {
     const doc = new jsPDF();
-
+  
     // Add logo
     doc.addImage(logo, 'PNG', 10, 25, 40, 20);
-
+  
     // Add header
     doc.setFontSize(16);
     doc.text('Bookings Report', 55, 20);
@@ -103,12 +124,12 @@ const HotelBookingManagement = () => {
     doc.text('Address: No: 12, Level 5, Dehiwala Road, Maharagama', 55, 44);
     doc.text('Phone: +94 11 208 8865 / +94 75 220 0202', 55, 52);
     doc.text('Website: www.lavendishleisure.com', 55, 59);
-
-    // Add a line separator after the header
+  
+    // Add line separator
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
     doc.line(10, 65, 200, 65);
-
+  
     // Add report period
     let reportDetailsY = 70;
     if (reportType === 'range' && reportDateRange.startDate && reportDateRange.endDate) {
@@ -118,7 +139,7 @@ const HotelBookingManagement = () => {
     } else if (reportType === 'year' && reportYear) {
       doc.text(`Report Year: ${reportYear}`, 10, reportDetailsY);
     }
-
+  
     // Calculate totals
     const totalRevenue = filteredBookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
     const roomCounts = filteredBookings.reduce((counts, booking) => {
@@ -127,8 +148,8 @@ const HotelBookingManagement = () => {
       }
       return counts;
     }, {});
-
-    // Add analysis section
+  
+    // Add summary section
     const summaryStartY = reportDetailsY + 10;
     doc.setFontSize(14);
     doc.text('Summary:', 10, summaryStartY);
@@ -136,13 +157,13 @@ const HotelBookingManagement = () => {
     doc.text(`Total Bookings: ${filteredBookings.length}`, 10, summaryStartY + 10);
     doc.text(`Total Revenue: Rs. ${totalRevenue.toFixed(2)}`, 10, summaryStartY + 20);
     doc.text('Rooms Booked:', 10, summaryStartY + 30);
-
+  
     let yPosition = summaryStartY + 40;
     for (const [roomType, count] of Object.entries(roomCounts)) {
       doc.text(`${roomType.charAt(0).toUpperCase() + roomType.slice(1)}: ${count}`, 15, yPosition);
       yPosition += 10;
     }
-
+  
     // Add bookings table
     doc.autoTable({
       startY: yPosition + 10,
@@ -156,10 +177,11 @@ const HotelBookingManagement = () => {
         booking.status,
       ]),
     });
-
+  
     // Save the PDF
     doc.save('Hotel_Bookings_Report.pdf');
   };
+  
 
   return (
     <div className="container mx-auto py-8">
