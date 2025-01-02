@@ -53,6 +53,45 @@ const AdminBookingManagement = () => {
     fetchHotels();
   }, []);
 
+  const handleToggleConfirmation = async (bookingId, currentStatus) => {
+    const updatedStatus = currentStatus === 'pending' ? 'confirmed' : 'pending';
+    try {
+      const response = await fetch(`/api/booking/toggle-status/${bookingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: updatedStatus }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSuccessMessage(`Booking status updated to ${updatedStatus}.`);
+        fetchBookings();
+      } else {
+        setErrorMessage(data.message);
+      }
+    } catch (error) {
+      setErrorMessage('Error updating booking status.');
+    }
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    try {
+      const response = await fetch(`/api/booking/cancel/${bookingId}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSuccessMessage('Booking cancelled successfully.');
+        fetchBookings();
+      } else {
+        setErrorMessage(data.message);
+      }
+    } catch (error) {
+      setErrorMessage('Error cancelling booking.');
+    }
+  };
+
   // Filtered bookings based on selected criteria
  // Filtered bookings based on selected criteria and report criteria
 const filteredBookings = bookings.filter((booking) => {
