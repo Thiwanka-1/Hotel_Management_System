@@ -5,6 +5,7 @@ import {
   deleteUser,
   verifyAdmin,
   getAllUsers,
+  getUserById,
 } from '../controllers/user.controller.js';
 import { verifyToken } from '../utils/verifyUser.js';
 
@@ -18,5 +19,7 @@ router.get('/all', verifyToken, getAllUsers);
 router.get('/admin', verifyToken, verifyAdmin, (req, res) => {
   res.json('Admin route, only accessible by admin.');
 });
+
+router.get('/get/:id', getUserById);
 
 export default router;

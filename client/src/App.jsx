@@ -9,7 +9,6 @@ import PrivateRoute from './components/PrivateRoute';
 
 import AdminProfile from './pages/AdminProfile';
 import ManageUsers from './pages/ManageUsers';
-import ContactUs from './pages/ContactUs';
 import ViewMessages from './pages/ViewMessages';
 
 import AddHotel from './pages/hotels/AddHotel';
@@ -24,15 +23,26 @@ import HotelBookingManagement from './pages/booking/HotelBookingManagement';
 import CheckRoomAvailability from './pages/hotels/CheckRoomAvailability';
 import BookingDetailsHotel from './pages/booking/BookingDetailsHotel';
 
+import ContactForm from './pages/contact/ContactForm ';
+import ConversationsList from './pages/contact/ConversationsList';
+import AdminConversationsList from './pages/contact/AdminConversationsList';
+import ConversationDetail from './pages/contact/ConversationDetail';
+import HotelConversationDetail from './pages/contact/HotelConversationDetail';
+
 
 
 export default function App() {
   return <BrowserRouter>
   <Header />
     <Routes>
-      <Route path = "/contact" element = {<ContactUs />} />
       <Route path = "/sign-in" element = {<SignIn />} />
       <Route path = "/sign-up" element = {<SignUp />} />
+      
+      <Route path = "/contact" element = {<ContactForm />} />
+      <Route path = "/contact-list" element = {<ConversationsList />} />
+      <Route path="/conversation/:conversationId" element={<ConversationDetail />} />
+      <Route path = "/hotel/conversation/:conversationId" element = {<HotelConversationDetail />} />
+
 
       <Route element={<PrivateRoute />}>
         <Route path = "/profile" element = {<Profile />} />
@@ -41,6 +51,7 @@ export default function App() {
         <Route path="/checkavailability" element={<CheckRoomAvailability />} />
         <Route path="/update-booking/:id" element={<UpdateBooking />} />
         <Route path="/hotel-booking-details/:id" element={<BookingDetailsHotel />} />
+        <Route path = "/admin-contact-list" element = {<AdminConversationsList />} />
 
       </Route>
       <Route element={<PrivateRoute adminOnly={true} />}>

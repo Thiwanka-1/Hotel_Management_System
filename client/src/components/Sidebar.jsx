@@ -56,7 +56,12 @@ export default function Sidebar() {
               <Link to="/sign-up" className="hover:text-gray-300">
                 Add Admin
               </Link>
-            </li> 
+            </li>
+            <li className="mb-4">
+              <Link to="/admin-contact-list" className="hover:text-gray-300">
+                Contact Messages 
+              </Link>
+            </li>  
           </>
         )}
 
@@ -77,7 +82,12 @@ export default function Sidebar() {
               <Link to="/checkavailability" className="hover:text-gray-300">
                 Check Hotel Availability
               </Link>
-            </li>      
+            </li>  
+            <li className="mb-4">
+              <Link to="/contact-list" className="hover:text-gray-300">
+                Contact List
+              </Link>
+            </li>    
           </>
         )}
       </ul>

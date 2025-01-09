@@ -43,7 +43,7 @@ mongoose.connect(process.env.MONGO, {
 // Define API routes
 app.use('/api/user', userRoutes);         // User management routes
 app.use('/api/auth', authRoutes);         // Authentication routes
-app.use('/api', contactRoutes);   // Contact routes
+app.use('/api/contact', contactRoutes);   // Contact routes
 app.use('/api/hotel', hotelRoutes);       // Hotel management routes
 app.use('/api/booking', bookingRoutes);  // Booking management routes (new)
 

@@ -84,3 +84,20 @@ export const deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+// get user by ID
+export const getUserById = async (req, res, next) => {
+  try {
+    // Find the user by ID
+    const user = await User.findById(req.params.id, 'username email profilePicture isAdmin'); // You can exclude password here
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found!' });
+    }
+
+    // Return the user data (you can customize the fields you want to return)
+    res.status(200).json(user);
+  } catch (error) {
+    next(error);
+  }
+};
