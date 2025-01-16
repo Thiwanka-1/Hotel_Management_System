@@ -2,28 +2,33 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import socket from './socket'; // Import the Socket.IO instance
 
 const ConversationDetail = () => {
-  const { conversationId } = useParams();
-  const [messages, setMessages] = useState([]);
-  const [senderDetails, setSenderDetails] = useState(null);
-  const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { conversationId } = useParams(); // Get conversation ID from URL params
+  const [messages, setMessages] = useState([]); // State for messages
+  const [senderDetails, setSenderDetails] = useState(null); // State for sender details
+  const [newMessage, setNewMessage] = useState(''); // State for the input message
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(''); // Error state
 
-  const { currentUser } = useSelector((state) => state.user);
+  const { currentUser } = useSelector((state) => state.user); // Get the logged-in user
 
+  // Fetch conversation details
   const fetchConversation = async () => {
     try {
       const response = await axios.get(`/api/contact/conversation/${conversationId}`);
       const conversation = response.data;
 
-      setMessages(conversation.messages || []);
+      setMessages(conversation.messages || []); // Set messages
       setSenderDetails({
         hotelName: conversation.hotelName,
         senderName: conversation.senderId?.username,
         senderEmail: conversation.senderId?.email,
       });
+
+      // Mark conversation as read
+      await axios.post('/api/contact/read', { conversationId });
     } catch (err) {
       console.error('Error loading conversation:', err);
       setError('Error loading conversation');
@@ -32,25 +37,54 @@ const ConversationDetail = () => {
     }
   };
 
+  // Real-time message listener and room joining
   useEffect(() => {
     if (conversationId) {
       fetchConversation();
+
+      // Join the conversation room
+      socket.emit('joinConversation', conversationId);
+
+      // Listen for new messages via Socket.IO
+      const handleNewMessage = (data) => {
+        if (data.conversationId === conversationId) {
+          setMessages((prevMessages) => {
+            const isDuplicate = prevMessages.some((msg) => msg.timestamp === data.timestamp);
+            if (!isDuplicate) {
+              return [...prevMessages, data];
+            }
+            return prevMessages;
+          });
+        }
+      };
+
+      socket.on('newMessage', handleNewMessage);
+
+      return () => {
+        socket.off('newMessage', handleNewMessage); // Cleanup listener
+      };
     }
   }, [conversationId]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    const messageData = {
+      conversationId,
+      senderId: currentUser._id,
+      message: newMessage,
+      timestamp: new Date().toISOString(),
+    };
+
     try {
-      await axios.post('/api/contact/reply', {
-        conversationId,
-        replyMessage: newMessage,
-      });
+      // Optimistically add the message to the UI
+      setMessages((prevMessages) => [...prevMessages, { ...messageData, senderId: { _id: currentUser._id } }]);
 
-      setNewMessage(''); // Clear the input field
+      // Emit the new message to the server
+      socket.emit('sendMessage', messageData);
 
-      // Fetch the updated conversation after sending the message
-      await fetchConversation();
+      // Clear the input field
+      setNewMessage('');
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Error sending the message');
@@ -115,7 +149,7 @@ const ConversationDetail = () => {
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type your reply here..."
-          className="w-full p-4 border border-gray-300 rounded-lg mb-4"
+          className="w-full p-4 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
           rows="3"
         ></textarea>
 

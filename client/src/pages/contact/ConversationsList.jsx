@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import socket from './socket'; // Import the Socket.IO instance
 
 const ConversationsList = () => {
   const [conversations, setConversations] = useState([]);
@@ -25,6 +26,23 @@ const ConversationsList = () => {
     };
 
     fetchConversations();
+
+    // Listen for new messages via Socket.IO
+    socket.on('newMessage', (data) => {
+      if (data.senderId !== currentUser._id) {
+        setConversations((prevConversations) =>
+          prevConversations.map((conv) =>
+            conv.conversationId === data.conversationId
+              ? { ...conv, isReadByHotel: false, status: 'Unread', updatedAt: new Date() }
+              : conv
+          )
+        );
+      }
+    });
+
+    return () => {
+      socket.off('newMessage'); // Cleanup on unmount
+    };
   }, [currentUser]);
 
   const markAsRead = async (conversationId) => {
@@ -33,7 +51,7 @@ const ConversationsList = () => {
       setConversations((prevConversations) =>
         prevConversations.map((conversation) =>
           conversation.conversationId === conversationId
-            ? { ...conversation, isReadByHotel: true }
+            ? { ...conversation, isReadByHotel: true, status: 'Read' }
             : conversation
         )
       );

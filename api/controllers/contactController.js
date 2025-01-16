@@ -1,6 +1,7 @@
 // controllers/contactController.js
 import Contact from '../models/contact.js';
 import User from '../models/user.model.js';
+import { io } from '../index.js'; // Import the Socket.IO instance
 
 // Add new message (hotel staff to admin)
 export const addMessage = async (req, res) => {
@@ -62,7 +63,6 @@ export const addMessage = async (req, res) => {
   }
 };
 
-
 // Get all conversations for admin (with optional hotel name filter)
 export const getMessages = async (req, res) => {
   const { filter } = req.query; // Get filter from query parameters
@@ -88,8 +88,8 @@ export const getConversationById = async (req, res) => {
 
   try {
     const conversation = await Contact.findOne({ conversationId })
-      .populate('messages.senderId', 'username email') // Populate sender details for each message
-      .populate('senderId', 'username email') // Populate hotel sender details
+      .populate('messages.senderId', 'username email _id') // Populate sender details for each message
+      .populate('senderId', 'username email _id') // Populate hotel sender details
       .exec();
 
     if (!conversation) {
@@ -102,7 +102,6 @@ export const getConversationById = async (req, res) => {
     res.status(500).json({ message: 'Error retrieving conversation', error });
   }
 };
-
 
 // Reply to a conversation (admin replies to hotel staff)
 export const replyToMessage = async (req, res) => {
@@ -118,25 +117,27 @@ export const replyToMessage = async (req, res) => {
       return res.status(404).json({ message: 'Conversation not found' });
     }
 
-    // Add the reply
-    conversation.messages.push({
+    const newMessage = {
       senderId: req.user.id,
       message: replyMessage,
       timestamp: new Date(),
-    });
+    };
 
-    // Update the "isRead" fields based on the sender
+    conversation.messages.push(newMessage);
+
     if (req.user.isAdmin) {
-      conversation.isReadByHotel = false; // Hotel hasn't read the new admin message
-      conversation.isReadByAdmin = true; // Admin always "reads" their own messages
+      conversation.isReadByHotel = false;
+      conversation.isReadByAdmin = true;
     } else {
-      conversation.isReadByAdmin = false; // Admin hasn't read the new hotel message
-      conversation.isReadByHotel = true; // Hotel always "reads" their own messages
+      conversation.isReadByAdmin = false;
+      conversation.isReadByHotel = true;
     }
 
     conversation.updatedAt = Date.now();
-
     await conversation.save();
+
+    // Emit the new message to all connected clients
+    io.emit('newMessage', { ...newMessage, conversationId });
 
     res.status(200).json({ message: 'Reply sent successfully!' });
   } catch (error) {
@@ -145,14 +146,13 @@ export const replyToMessage = async (req, res) => {
   }
 };
 
-
-
-
-
-
 // Mark conversation as read
 export const markAsRead = async (req, res) => {
   const { conversationId } = req.body;
+
+  if (!conversationId) {
+    return res.status(400).json({ message: 'Conversation ID is required' });
+  }
 
   try {
     const conversation = await Contact.findOne({ conversationId });
@@ -162,10 +162,12 @@ export const markAsRead = async (req, res) => {
     }
 
     // Update the "isRead" field based on the user's role
-    if (req.user.isAdmin) {
+    if (req.user && req.user.isAdmin) {
       conversation.isReadByAdmin = true;
-    } else {
+    } else if (req.user) {
       conversation.isReadByHotel = true;
+    } else {
+      return res.status(400).json({ message: 'User information is missing' });
     }
 
     conversation.updatedAt = Date.now();
@@ -177,7 +179,6 @@ export const markAsRead = async (req, res) => {
     res.status(500).json({ message: 'Error marking conversation as read', error });
   }
 };
-
 
 // Delete a conversation
 export const deleteConversation = async (req, res) => {

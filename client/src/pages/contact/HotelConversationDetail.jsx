@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import socket from './socket'; // Import the Socket.IO instance
 
 const HotelConversationDetail = () => {
   const { conversationId } = useParams(); // Get conversation ID from URL params
@@ -10,7 +11,7 @@ const HotelConversationDetail = () => {
   const [loading, setLoading] = useState(true); // Loading state
   const [error, setError] = useState(''); // Error state
 
-  const { currentUser } = useSelector((state) => state.user); // Get the logged-in hotel user
+  const { currentUser } = useSelector((state) => state.user); // Get the logged-in user
 
   // Fetch conversation details
   const fetchConversation = async () => {
@@ -28,25 +29,54 @@ const HotelConversationDetail = () => {
     }
   };
 
-  // Fetch conversation on component mount or when conversationId changes
+  // Real-time message listener and room joining
   useEffect(() => {
     if (conversationId) {
       fetchConversation();
+
+      // Join the conversation room
+      socket.emit('joinConversation', conversationId);
+
+      // Listen for new messages via Socket.IO
+      const handleNewMessage = (data) => {
+        if (data.conversationId === conversationId) {
+          setMessages((prevMessages) => {
+            const isDuplicate = prevMessages.some((msg) => msg.timestamp === data.timestamp);
+            if (!isDuplicate) {
+              return [...prevMessages, data];
+            }
+            return prevMessages;
+          });
+        }
+      };
+
+      socket.on('newMessage', handleNewMessage);
+
+      return () => {
+        socket.off('newMessage', handleNewMessage); // Cleanup listener
+      };
     }
   }, [conversationId]);
 
-  // Handle sending a message
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return; // Prevent sending empty messages
+    if (!newMessage.trim()) return;
+
+    const messageData = {
+      conversationId,
+      senderId: currentUser._id,
+      message: newMessage,
+      timestamp: new Date().toISOString(),
+    };
 
     try {
-      await axios.post('/api/contact/reply', {
-        conversationId,
-        replyMessage: newMessage,
-      });
+      // Optimistically add the message
+      setMessages((prevMessages) => [...prevMessages, { ...messageData, senderId: { _id: currentUser._id } }]);
 
-      setNewMessage(''); // Clear the input field
-      await fetchConversation(); // Fetch updated messages
+      // Emit the new message to the server
+      socket.emit('sendMessage', messageData);
+
+      // Clear the input field
+      setNewMessage('');
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Error sending the message');
@@ -61,7 +91,6 @@ const HotelConversationDetail = () => {
         <div className="bg-red-100 text-red-600 p-4 rounded-lg">{error}</div>
       ) : (
         <>
-          {/* Messages Section */}
           <div className="messages space-y-4 mb-6">
             {messages.map((msg, index) => (
               <div
@@ -91,7 +120,6 @@ const HotelConversationDetail = () => {
             ))}
           </div>
 
-          {/* Reply Section */}
           <div className="reply-section mt-6">
             <textarea
               value={newMessage}
